@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
 
     container:
       image: hesto2/aws-terraform-node20:latest
