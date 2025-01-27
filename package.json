@@ -29,7 +29,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "deploy-dev": "gh-pages -d build",
     "deploy-prod": "gh-pages -d build -r https://github.com/hesto2/battletech-tools.git",
