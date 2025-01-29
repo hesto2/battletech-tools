@@ -55,6 +55,8 @@ import { IAlphaStrikeMPScenario } from "../data/alpha-strike-mp-scenarios";
 import { IAlphaStrikeMPTerrain } from "../data/alpha-strike-mp-terrain";
 import { AuthProvider } from "../auth/AuthProvider";
 import { RemoteDataProvider } from "../auth/RemoteDataProvider";
+import PolicyPage from "./pages/PolicyPage";
+import TermsAndConditions from "./pages/TermsPage";
 // import init, { AlphaStrikeUnit, add_testing, MULUnit } from "btlibs";
 let pjson = require("../../package.json");
 
@@ -649,6 +651,14 @@ export default class AppRouter extends React.Component<
                 element={
                   <GameManagementRouter appGlobals={this.state.appGlobals} />
                 }
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/privacy`}
+                element={<PolicyPage />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/terms`}
+                element={<TermsAndConditions />}
               />
 
               <Route
