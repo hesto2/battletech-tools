@@ -593,6 +593,14 @@ export default class AppRouter extends React.Component<
                     />
                 </Route> */}
               <Route
+                path={`${process.env.PUBLIC_URL}/privacy`}
+                element={<PolicyPage />}
+              />
+              <Route
+                path={`${process.env.PUBLIC_URL}/terms`}
+                element={<TermsAndConditions />}
+              />
+              <Route
                 path={`${process.env.PUBLIC_URL}/equipment-editor`}
                 element={<EquipmentEditor appGlobals={this.state.appGlobals} />}
               />
@@ -651,14 +659,6 @@ export default class AppRouter extends React.Component<
                 element={
                   <GameManagementRouter appGlobals={this.state.appGlobals} />
                 }
-              />
-              <Route
-                path={`${process.env.PUBLIC_URL}/privacy`}
-                element={<PolicyPage />}
-              />
-              <Route
-                path={`${process.env.PUBLIC_URL}/terms`}
-                element={<TermsAndConditions />}
               />
 
               <Route
