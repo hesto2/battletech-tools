@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { getConfig, setConfig } from "./ApiClient";
+import React, { createContext, useContext, useState } from "react";
 import { googleLogout, CredentialResponse } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-const CONFIG_KEYS = ["currentASForce", "favoriteASGroups"];
 
 interface AuthContextType {
   isLoggedIn: boolean;
@@ -19,7 +17,15 @@ export const AuthProvider = ({ children }: { children: any }) => {
     useState<CredentialResponse | null>(null);
   const [email, setEmail] = useState<string | null>(null);
 
+  const logout = () => {
+    localStorage.removeItem("google_token");
+    googleLogout();
+    setCredentialResponse(null);
+    setEmail(null);
+  };
+
   const onCompleteLogin = async (credentialResponse: CredentialResponse) => {
+    // Called from the "top-menu" component when the user logs in so we can get the data from the login button component
     if (!credentialResponse.credential) {
       return;
     }
@@ -27,13 +33,6 @@ export const AuthProvider = ({ children }: { children: any }) => {
     setCredentialResponse(credentialResponse);
     const { email }: any = jwtDecode(credentialResponse.credential);
     setEmail(email);
-  };
-
-  const logout = () => {
-    localStorage.removeItem("google_token");
-    googleLogout();
-    setCredentialResponse(null);
-    setEmail(null);
   };
 
   return (

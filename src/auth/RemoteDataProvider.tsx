@@ -15,6 +15,7 @@ interface RemoteConfig {
 
 interface RemoteDataContextType {
   lastUpdated: number | null;
+  manuallySave: () => Promise<void>;
 }
 
 const RemoteDataContext = createContext<RemoteDataContextType | undefined>(
@@ -37,28 +38,35 @@ export const RemoteDataProvider = ({
   const { credentialResponse } = useAuth();
 
   const fetchRemoteConfig = useCallback(async () => {
+    console.log(1);
+
     if (!credentialResponse?.credential) {
       return;
     }
     const config = await getConfig(credentialResponse?.credential);
+
+    // Save each config to local storage
     Object.keys(config).forEach((key) => {
       if (config[key]) {
         localStorage.setItem(key, config[key]);
       }
     });
+
+    // If we have a config, update the state of the app
     if (config?.currentASForce || config?.favoriteASGroups) {
       onUpdateConfig({
         currentASForce: JSON.parse(config?.currentASForce || {}),
         favoriteASGroups: JSON.parse(config?.favoriteASGroups || {}),
       });
     }
-    console.log("remote", config);
+
     setLastConfig(config || {});
     setLastUpdated(Date.now());
-  }, [credentialResponse?.credential, onUpdateConfig]);
+  }, [credentialResponse?.credential]);
 
   const updateRemoteConfigIfDirty = useCallback(async () => {
     // Don't push updates if we haven't fetched remote yet
+    console.log(`checking`);
     if (lastConfig == null) {
       return;
     }
@@ -87,21 +95,42 @@ export const RemoteDataProvider = ({
     } else {
       setLastConfig(null);
     }
-  }, [credentialResponse, fetchRemoteConfig]);
+  }, [credentialResponse?.credential, fetchRemoteConfig]);
 
   useEffect(() => {
-    if (credentialResponse && lastConfig) {
+    if (credentialResponse?.credential && lastConfig) {
       const intervalId = setInterval(() => {
         updateRemoteConfigIfDirty();
       }, 30000); // 30 seconds
       return () => clearInterval(intervalId); // Cleanup interval on unmount or when credentialResponse changes
     }
-  }, [credentialResponse, lastConfig, updateRemoteConfigIfDirty]);
+  }, [credentialResponse?.credential, lastConfig, updateRemoteConfigIfDirty]);
+
+  useEffect(() => {
+    if (credentialResponse?.credential && lastConfig) {
+      const intervalId = setInterval(() => {
+        // TEST THIS
+
+        if (lastDirty || 0 > Date.now() - 360000) {
+          console.log(`fetching remote`);
+          fetchRemoteConfig();
+        }
+      }, 360000 * 4); // four hours
+      return () => clearInterval(intervalId); // Cleanup interval on unmount or when credentialResponse changes
+    }
+  }, [
+    credentialResponse?.credential,
+    lastConfig,
+    updateRemoteConfigIfDirty,
+    fetchRemoteConfig,
+    lastDirty,
+  ]);
 
   return (
     <RemoteDataContext.Provider
       value={{
         lastUpdated,
+        manuallySave: updateRemoteConfigIfDirty,
       }}
     >
       {children}
