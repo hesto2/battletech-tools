@@ -5,8 +5,9 @@ import { CONST_BATTLETECH_URL } from "../../configVars";
 import { IAppGlobals } from "../app-router";
 import BattleTechLogo from "./battletech-logo";
 import "./top-menu.scss";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../auth/AuthProvider";
+import { Button } from "react-bootstrap";
 
 export default function TopMenu(props: ITopMenuProps) {
   const toggleMobile = (): void => {
@@ -15,7 +16,7 @@ export default function TopMenu(props: ITopMenuProps) {
   const closeMobile = (): void => {
     props.appGlobals.closeMobile();
   };
-  const { isLoggedIn, logout, onCompleteLogin, email } = useAuth();
+  const { isLoggedIn, logout, email, login } = useAuth();
 
   let menuStructure: IMenuDef[] = [
     {
@@ -245,19 +246,7 @@ export default function TopMenu(props: ITopMenuProps) {
             </li>
           ) : (
             <div className={"google-btn"}>
-              <GoogleLogin
-                theme="filled_black"
-                onSuccess={(response) => {
-                  if (response.credential) {
-                    onCompleteLogin(response);
-                  }
-                }}
-                onError={() => {
-                  console.log("Login failed");
-                }}
-                useOneTap={true}
-                auto_select={true}
-              />
+              <Button onClick={login}>Login</Button>
             </div>
           )}
 

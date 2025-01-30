@@ -35,15 +35,13 @@ export const RemoteDataProvider = ({
   const [lastConfig, setLastConfig] = useState<RemoteConfig | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [lastDirty, setLastDirty] = useState<number | null>(null);
-  const { credentialResponse } = useAuth();
+  const { tokens } = useAuth();
 
   const fetchRemoteConfig = useCallback(async () => {
-    console.log(1);
-
-    if (!credentialResponse?.credential) {
+    if (!tokens?.access_token) {
       return;
     }
-    const config = await getConfig(credentialResponse?.credential);
+    const config = await getConfig(tokens?.access_token);
 
     // Save each config to local storage
     Object.keys(config).forEach((key) => {
@@ -62,11 +60,10 @@ export const RemoteDataProvider = ({
 
     setLastConfig(config || {});
     setLastUpdated(Date.now());
-  }, [credentialResponse?.credential]);
+  }, [tokens?.access_token]);
 
   const updateRemoteConfigIfDirty = useCallback(async () => {
     // Don't push updates if we haven't fetched remote yet
-    console.log(`checking`);
     if (lastConfig == null) {
       return;
     }
@@ -84,42 +81,42 @@ export const RemoteDataProvider = ({
       setLastDirty(Date.now());
       setLastConfig(newConfig);
       console.log("updating", newConfig);
-      await setConfig(newConfig, credentialResponse?.credential as string);
+      await setConfig(newConfig, tokens?.access_token as string);
       setLastUpdated(Date.now());
     }
-  }, [credentialResponse?.credential, lastConfig]);
+  }, [tokens?.access_token, lastConfig]);
 
   useEffect(() => {
-    if (credentialResponse?.credential) {
+    if (tokens?.access_token) {
       fetchRemoteConfig();
     } else {
       setLastConfig(null);
     }
-  }, [credentialResponse?.credential, fetchRemoteConfig]);
+  }, [tokens?.access_token, fetchRemoteConfig]);
 
   useEffect(() => {
-    if (credentialResponse?.credential && lastConfig) {
+    if (tokens?.access_token && lastConfig) {
       const intervalId = setInterval(() => {
         updateRemoteConfigIfDirty();
-      }, 30000); // 30 seconds
-      return () => clearInterval(intervalId); // Cleanup interval on unmount or when credentialResponse changes
+      }, 1000 * 15); // 15 seconds
+      return () => clearInterval(intervalId); // Cleanup interval on unmount or when tokens changes
     }
-  }, [credentialResponse?.credential, lastConfig, updateRemoteConfigIfDirty]);
+  }, [tokens?.access_token, lastConfig, updateRemoteConfigIfDirty]);
 
   useEffect(() => {
-    if (credentialResponse?.credential && lastConfig) {
+    if (tokens?.access_token && lastConfig) {
       const intervalId = setInterval(() => {
         // TEST THIS
 
-        if (lastDirty || 0 > Date.now() - 360000) {
+        if (lastDirty || 0 > Date.now() - 1000 * 60 * 60 * 1) {
           console.log(`fetching remote`);
           fetchRemoteConfig();
         }
-      }, 360000 * 4); // four hours
-      return () => clearInterval(intervalId); // Cleanup interval on unmount or when credentialResponse changes
+      }, 1000 * 60 * 60 * 1);
+      return () => clearInterval(intervalId); // Cleanup interval on unmount or when tokens changes
     }
   }, [
-    credentialResponse?.credential,
+    tokens?.access_token,
     lastConfig,
     updateRemoteConfigIfDirty,
     fetchRemoteConfig,

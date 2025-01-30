@@ -587,11 +587,6 @@ export default class AppRouter extends React.Component<
                 path={`${process.env.PUBLIC_URL}/`}
                 element={<Home appGlobals={this.state.appGlobals} />}
               />
-              {/* <Route path={`${process.env.PUBLIC_URL}/page1`} >
-                    <Page1
-                        appGlobals={this.state.appGlobals}
-                    />
-                </Route> */}
               <Route
                 path={`${process.env.PUBLIC_URL}/privacy`}
                 element={<PolicyPage />}
