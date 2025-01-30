@@ -108,11 +108,11 @@ export const RemoteDataProvider = ({
       const intervalId = setInterval(() => {
         // TEST THIS
 
-        if (lastDirty || 0 > Date.now() - 1000 * 60 * 60 * 1) {
+        if (lastDirty || 0 > Date.now() - 1000 * 60 * 5) {
           console.log(`fetching remote`);
           fetchRemoteConfig();
         }
-      }, 1000 * 60 * 60 * 1);
+      }, 1000 * 60 * 5);
       return () => clearInterval(intervalId); // Cleanup interval on unmount or when tokens changes
     }
   }, [
