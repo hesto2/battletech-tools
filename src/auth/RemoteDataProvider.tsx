@@ -98,7 +98,7 @@ export const RemoteDataProvider = ({
     if (tokens?.access_token && lastConfig) {
       const intervalId = setInterval(() => {
         updateRemoteConfigIfDirty();
-      }, 1000 * 15); // 15 seconds
+      }, 1000 * 5); // 15 seconds
       return () => clearInterval(intervalId); // Cleanup interval on unmount or when tokens changes
     }
   }, [tokens?.access_token, lastConfig, updateRemoteConfigIfDirty]);
