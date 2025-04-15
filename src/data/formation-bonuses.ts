@@ -24,6 +24,9 @@ class FormationBonusBase {
     RoleCount(group:AlphaStrikeGroup, role:string):number{
         return group.members.filter(x=>x.role===role).length;
     }
+    HasMinimumMembers(group:AlphaStrikeGroup):boolean{
+        return group.members.length>=3;
+    }
 }
 class None extends FormationBonusBase implements IFormationBonus {
     Name: string="None";
@@ -41,6 +44,9 @@ class BattleLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "50 percent of the standard Battle Lance must be Size 3 or higher. If the Battle Lance is a vehicle formation, these Size 3+ units must also be pairs of the same vehicle model. At least three units in a Battle Lance must also be any combination of the Brawler, Sniper and/or Skirmisher unit roles.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
@@ -61,6 +67,10 @@ class LightBattleLance extends FormationBonusBase implements IFormationBonus {
         if (group.members.filter(x=>x.size>=4).length>0){
             return false;
         }
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
         result = result && (Math.ceil(group.members.length*.75)<=group.members.filter(x=>x.size===1).length);
         result = result && (this.RoleCount(group, "Scout")>=1);
@@ -74,6 +84,9 @@ class MediumBattleLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 50 percent of the Medium Battle Lance must be of Size 2, and there may be no units of Size 4 or larger in this formation at all. If this is a vehicle formation, there must be at least 2 matched pairs of Size 2 units.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (group.members.filter(x=>x.size>=4).length>0){
             return false;
         }
@@ -89,6 +102,10 @@ class HeavyBattleLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 50 percent of the Heavy Battle Lance must be of Size 3 or higher, and there may be no Size 1 units in this formation. If this is a vehicle formation, there must be at least 2 matched pairs of Size 3 units.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         if (group.members.filter(x=>x.size===1).length>0){
             return false;
         }
@@ -105,9 +122,13 @@ class AssaultLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 3 units in a basic Assault Lance must be of Size 3 or greater, and there can be no units of Size 1 in this formation type. All units in an Assault Lance must have a minimum (undamaged) Armor value of 5 points, and at least 75 percent of the units in this formation must possess a Medium-range attack value of 3 or more. An Assault Lance must contain at least one unit of the Juggernaut role, or 2 units of the Sniper role.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
+
         if (group.members.filter(x=>x.size===1).length>0){
             return false;
         }
@@ -131,6 +152,10 @@ class FastAssaultLance extends FormationBonusBase implements IFormationBonus {
         if (group.members.filter(x=>x.size===1).length>0){
             return false;
         }
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
         result = result && (group.members.filter(x=>x.size>=3).length>=3);
         result = result && (group.members.filter(x=>x.armor<5).length===0);
@@ -151,9 +176,13 @@ class StrikerCavalryLance extends FormationBonusBase implements IFormationBonus 
     RequirementsDescription: string = "All units in a Striker/Cavalry Lance must have a minimum ground Move of 10” or a jumping Move of 8”j. No units in a Striker/Cavalry Lance may be of Size 4 or above. At least 50 percent of the Striker/Cavalry Lance must be of the Striker or Skirmisher unit role";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
+
         if (group.members.filter(x=>x.size>=4).length>0){
             return false;
         }
@@ -196,6 +225,10 @@ class LightStrikerCavalryLance extends FormationBonusBase implements IFormationB
         if (group.members.filter(x=>x.size>=3).length>0){
             return false;
         }
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
         //must have 2 with long damage
         result = result && (group.members.filter(x=>+x.damage.long>0).length>=2)
@@ -222,6 +255,10 @@ class HeavyStrikerCavalryLance extends FormationBonusBase implements IFormationB
         if (group.members.filter(x=>x.size<2).length>0){
             return false;
         }
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
         //must have at least 1 with long damage
         result = result && (group.members.filter(x=>+x.damage.long>1).length>=1)
@@ -243,9 +280,13 @@ class FireLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 75 percent of the units in a standard Fire Lance must be of either the Missile Boat or Sniper unit roles.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
+
         let result =true;
 
         // 75% sniper or missileboat
@@ -260,11 +301,16 @@ class FireSupportLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "To serve as a Fire Support Lance, at least 3 units in this formation must possess the Indirect Fire (IF#) special ability.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         // 3 IF mechs
-        // console.log(group);
-        result = result && (group.members.filter(x=>x.abilities.includes('IF')).length>=3);
+        //console.log(group);
+        var regex = /IF\d+/;
+        result = result && (group.members.filter(x=>x.abilities.some(y=>regex.test(y))).length>=3);
         return result;
     }
 
@@ -275,10 +321,15 @@ class ArtilleryFireLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "To serve as an Artillery Fire Lance, at least 2 units in this formation must have an Artillery (ARTX-#) special ability.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         // 2 Art mechs
-        result = result && (group.members.filter(x=>x.abilities.includes('ART')).length>=2);
+        var regex = /ART.+\d+/;
+        result = result && (group.members.filter(x=>x.abilities.some(y=>regex.test(y))).length>=2);
         return result;
     }
 
@@ -290,6 +341,10 @@ class DirectFireLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 2 units in a Direct Fire Lance must be of Size 3 or larger, and all units in this formation must be able to deliver at least 2 points of damage to their Long-range attack bracket.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         // 3 or larger
@@ -306,14 +361,20 @@ class AntiAirLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "In addition to the requirements established for the standard Fire Lance, at least 2 units in an Anti-Air Lance must possess the Flak (FLK#), Autocannon (AC#/#/#), or Artillery (ARTX-#) special abilities.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
+
         let result =true;
 
         // 75% sniper or missileboat
         result = result && (Math.ceil(group.members.length*.75)<=(this.RoleCount(group, "Missile Boat")+this.RoleCount(group, "Sniper")));
-        result = result && ((group.members.filter(x=>x.abilities.includes('FLK')).length + group.members.filter(x=>x.abilities.includes('AC')).length + group.members.filter(x=>x.abilities.includes('ART')).length)>=2)
+        var artRegex = /ART\d+/;
+        var acRegex = /AC\d+/;
+        result = result && ((group.members.filter(x=>x.abilities.includes('FLK')).length + group.members.filter(x=>x.abilities.some(y=>artRegex.test(y))).length + group.members.filter(x=>x.abilities.some(y=>acRegex.test(y))).length)>=2);
         return result;
     }
 
@@ -326,6 +387,10 @@ class ReconLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Recon Lance must possess a minimum Move of 10”. At least 2 units in this formation type must also be of the Scout or Striker unit roles.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
@@ -345,6 +410,10 @@ class LightRecon extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Light Recon Lance must be of Size 1, with a minimum Move of 12” (with or without jump capability). Furthermore, all of these units must be of the Scout unit role.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         result = result && (group.members.filter(x=>x.size===1).length===group.members.length);
@@ -360,6 +429,10 @@ class HeavyReconLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Heavy Recon Lance must have a Move of 8” of more, with no less than 2 able to move 10” or more (all with or without jump capability). At least 1 unit in this formation type must be of Size 3 or larger. Finally, at least 2 units in a Heavy Recon Lance must be of the Scout unit role.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         result = result && (group.members.filter(x=>(x.move.filter(y=>y.move>=8).length>0)).length===group.members.length);
@@ -377,6 +450,10 @@ class PursuitLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Pursuit Lance must be of Size 2 or less, and 75 percent of this formation must have a Move of 12” or more, regardless of jumping capability. At least 1 unit in the Pursuit Lance must have a Medium-range attack value over 1 point.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         if (this.CheckIdealRole(group, this.IdealRole.Name)){
             return true;
         }
@@ -395,6 +472,10 @@ class ProbeLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Probe Lance must be of Size 3 or less, and 75 percent must have a Move of 10” or more, with or without jump capability. All Probe Lance units must be able to deliver at least 2 points of damage at Medium range.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         result = result && (group.members.filter(x=>x.size>3).length===0);
@@ -411,6 +492,10 @@ class SweepLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "All units in a Sweep Lance must be of Size 2 or less, and have a Move of 10” or more, regardless of jumping capability. All Sweep Lance units must be able to deliver at least 2 points of damage at Short range.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result =true;
 
         result = result && (group.members.filter(x=>x.size>2).length===0);
@@ -427,10 +512,10 @@ class CommandLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least one unit in the Command Lance must be designated as either the force commander or a key lieutenant. For the purposes of building a force, these rules recommend that one unit in the overall combat force be identified as the force’s field commander, with no more than 1 sub-commanding lieutenant assigned for every 6 non-infantry units in the entire force. The Command Lance would then be established as the lance in which the senior force commander is assigned, but additional Command Lances can be built around the sub-commanders as well. In this formation, 50 percent of the units must have one of the following unit roles: Sniper, Missile Boat, Skirmisher, or Juggernaut. One additional unit in the lance must be a Brawler, Striker, or Scout. The unit designated as the commander’s unit may be any of the lance’s members, including these prerequisite units.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
-        if(group.members.length === 0){
-            //This is the only formation that doesn't show in empty groups, so I'm forcing it to.
-            return true;
+        if(this.HasMinimumMembers(group)===false){
+            return false;
         }
+
         let result =true;
         //50 percent of the units must have one of the following unit roles: Sniper, Missile Boat, Skirmisher, or Juggernaut.
         //One additional unit in the lance must be a Brawler, Striker, or Scout.
@@ -447,6 +532,10 @@ class LightFireLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "No unit of Heavy weight class or larger (Size 3+) may be included. At least 50 percent of the units in this formation must have either the Missile Boat or Sniper Unit Roles.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result = true;
         result = result && (Math.ceil(group.members.length*.5)<=(this.RoleCount(group, "Missile Boat")+this.RoleCount(group, "Sniper")));
         result = result && (group.members.filter(x=>x.size>2).length===0);
@@ -460,10 +549,15 @@ class RifleLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "Exclusive to House Davion (Not Implemented). At least 75 percent of the units in this Formation must be Medium or Heavy (Size 2 or 3). No units may be Light (Size 1). At least 50 percent of these units must have an autocannon, including LB-X, Ultra, or Rotary autocannons (usually with the AC or FLK special ability), and all units must have at least a minimum Walk/Cruise speed of 4 (Move 8”+).";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result = true;
         result = result && (group.members.filter(x=>x.size===1).length===0);
         result = result && (Math.ceil(group.members.length*.75)<=(group.members.filter(x=>x.size===2||x.size===3).length));
-        result = result && (Math.ceil(group.members.length*.5)<=group.members.filter(x=>(x.abilities.filter(y=>y.includes('AC')||y.includes('FLK')).length>0)).length);
+        var acRegex = /AC\d+/;
+        result = result && (Math.ceil(group.members.length*.5)<=group.members.filter(x=>(x.abilities.filter(y=>acRegex.test(y)||y.includes('FLK')).length>0)).length);
         result = result && (group.members.filter(x=>x.move.filter(y=>y.move>=8)).length===group.members.length);
         return result;
     }
@@ -476,6 +570,10 @@ class HunterLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least 50 percent of the units in this Formation must have the Ambusher or Juggernaut role.";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result = true;
         result = result && (Math.ceil(group.members.length*.5)<=(this.RoleCount(group, "Ambusher")+this.RoleCount(group, "Juggernaut")));
         return result;
@@ -488,6 +586,10 @@ class PhalanxStar extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "The Phalanx Star must consist of at least two combat vehicles or BattleMechs, with the remainder of the Star comprised of Elementals, more combat vehicles or more BattleMechs . There must be at least two different unit types (BattleMech, combat vehicle, battle armor) in a Phalanx Star . A Clan Steel Viper Phalanx Star may include conventional infantry in place of battle armor."
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result = true;
         if(group.members.length === 0){
             return result;
@@ -509,10 +611,11 @@ class RogueStar extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "At least two of the units in the Formation must be the same model (including the same OmniMech configuration).";
 
     IsValid(group: AlphaStrikeGroup): boolean {
-        let result = true;
-        if(group.members.length === 0){
-            return result;
+        if(this.HasMinimumMembers(group)===false){
+            return false;
         }
+
+        let result = true;
         let aName = group.members.map(x => x.name);
         //At least two of the same named model. Duplicated model will not have the same index as the first model, so that's what we're looking for.
         result = result && (aName.filter((x, index, arr) => arr.indexOf(x) !== index).length >= 1);
@@ -526,6 +629,10 @@ class StrategicCommandStar extends FormationBonusBase implements IFormationBonus
     RequirementsDescription: string = " This Formation must be comprised of either 4 points of ’Mechs or Elementals and 1 point of aerospace fighters .  If the Strategic Command Star is comprised of ’Mechs, at least two must be Heavy or Assault ’Mechs .  No ’Mechs may be light or size 1 . In addition, every unit must have a Gunnery Skill rating of 3 (TW) or Skill 3 (AS) . The unit designated as the commander’s unit may be any of the Star’s members, except for the aerospace units ";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         let result = true;
         if(group.members.length === 0){
             return result;
@@ -550,6 +657,10 @@ class SupportLance extends FormationBonusBase implements IFormationBonus {
     RequirementsDescription: string = "None";
 
     IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
         return true;
     }
 
@@ -560,12 +671,75 @@ class OrderLance extends FormationBonusBase implements IFormationBonus {
     BonusDescription: string = "Designate one Unit as the command Unit of the Formation; it receives the Tactical Genius, Antagonizer or Sniper SPA. All Units in the Formation receive the Iron Will or Speed Demon SPA; the SPA chosen applies to all Units in the Formation.";
     RequirementsDescription: string = "Exclusive to House Kurita Forces. All Units in the Formation must be of the same Size and model (all Dragons/ Grand Dragons, all Panthers, etc).";
     IsValid(group: AlphaStrikeGroup): boolean {
-        let gLen = group.members.length;
-        if (gLen < 2) {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+
+        var result = true;
+        if (group.members.length < 2) {
             return false;
         }
         let firstClass = group.members[0].class;
-        return group.members.filter(x => x.class===firstClass).length === gLen;
+        result = result && (group.members.filter(x=>x.class !== firstClass).length === 0);
+        return result;
+    }
+}
+
+// not adding this yet as I hjaven't figured out the 'from any special ability' magic
+class Horde extends FormationBonusBase implements IFormationBonus {
+    Name: string = "Horde";
+    BonusDescription: string = "Swarm–When any Unit in this Formation is targeted, the targeted Unit’s player may switch the target to any other Unit in this Formation that is a legal target (within line of sight) and at the same range (or less) from the attacker.";
+    RequirementsDescription: string = "Must have 5 to 10 Units. All Units must be unit size 1. No Unit may have a damage value, at any range or from any special ability, greater than 2.";
+    IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+        var result = true;
+        if (group.members.length < 5 || group.members.length > 10) {
+            return false;
+        }
+        // all size 1
+        if (group.members.filter(x=>x.size===1).length !== group.members.length) {
+            return false;
+        }
+        result = result && (group.members.filter(x=>+x.damage.short>2).length===0)
+        result = result && (group.members.filter(x=>+x.damage.medium>2).length===0)
+        result = result && (group.members.filter(x=>+x.damage.long>2).length===0)
+        return result;
+    }
+}
+
+class BerserkerLance extends FormationBonusBase implements IFormationBonus {
+    Name: string = "Berserker Lance";
+    BonusDescription: string = "Two Units of the Formation receive the Zweihander or Swordsman Special Pilot Ability; the same ability must be assigned to both Units.";
+    RequirementsDescription: string = "As Battle Lance.";
+    IdealRole: ASMULRole = {Id:109, Name: "Brawler", Image:"", SortOrder:109};
+    IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+        if (this.CheckIdealRole(group, this.IdealRole.Name)){
+            return true;
+        }
+        let result =true;
+        result = result && (Math.ceil(group.members.length*.50)<=group.members.filter(x=>x.size>=3).length);
+        let brawlerSniperSkirmisherCount = this.RoleCount(group, "Brawler") + this.RoleCount(group, "Sniper")+this.RoleCount(group, "Skirmisher");
+        result = result && (brawlerSniperSkirmisherCount >=3)
+        return result;
+    }
+}
+
+class AntiMechLance extends FormationBonusBase implements IFormationBonus {
+    Name: string = "Anti-‘Mech Lance";
+    BonusDescription: string = "Enemy Units in base-to-base contact with an Anti-‘Mech Lance suffer a –1 To-Hit Modifier penalty to any weapon attacks made by that enemy Unit.";
+    RequirementsDescription: string = "All Units must be infantry.";
+    IsValid(group: AlphaStrikeGroup): boolean {
+        if(this.HasMinimumMembers(group)===false){
+            return false;
+        }
+        let result = true;
+        result = result && (group.members.filter(x => x.type === 'CI' || x.type === 'BA').length === group.members.length)
+        return result
     }
 }
 
@@ -600,6 +774,9 @@ export const formationBonuses: IFormationBonus[] = [
     new RogueStar(),
     new StrategicCommandStar(),
     new SupportLance(),
-    new OrderLance()
+    new OrderLance(),
+    new Horde(),
+    new BerserkerLance(),
+    new AntiMechLance()
 
 ];

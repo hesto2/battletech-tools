@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaArrowCircleLeft, FaList, FaTh } from "react-icons/fa";
+import { FaArrowCircleLeft, FaColumns } from "react-icons/fa";
 import { FiRefreshCcw } from "react-icons/fi";
 import { Link } from 'react-router-dom';
 import AlphaStrikeGroup from '../../../../classes/alpha-strike-group';
@@ -28,8 +28,32 @@ export default class AlphaStrikeRosterInPlay extends React.Component<IInPlayProp
         this.props.appGlobals.makeDocumentTitle("Playing Alpha Strike");
     }
 
+    nextRound = (
+      e: React.FormEvent<HTMLSpanElement>
+    ): void => {
+      if( e && e.preventDefault ) e.preventDefault();
 
+      this.props.appGlobals.openConfirmDialog(
+        "End Round",
+        "Ending the round will apply all the pending updates to all units heat and damage.",
+        "End Round",
+        "Cancel",
+        () => {
+          if (this.props.appGlobals.currentASForce) {
+            for (let group of this.props.appGlobals.currentASForce.groups) {
+              for( let unit of group.members ) {
+                unit.applyRound();
+              }
+            }
+    
+            this.props.appGlobals.saveCurrentASForce( this.props.appGlobals.currentASForce );
+    
+          }  
+        }
+      )
 
+          
+    } 
 
     toggleCardMode = (
       e: React.FormEvent<HTMLSpanElement>
@@ -39,7 +63,12 @@ export default class AlphaStrikeRosterInPlay extends React.Component<IInPlayProp
 
       let appSettings = this.props.appGlobals.appSettings;
 
-      appSettings.alphaStrikeInPlayCardMode = !appSettings.alphaStrikeInPlayCardMode;
+      if (appSettings.alphaStrikeInPlayColumns < 5) {
+        appSettings.alphaStrikeInPlayColumns++;
+      } else {
+        appSettings.alphaStrikeInPlayColumns = 1;
+      }
+
       this.props.appGlobals.saveAppSettings( appSettings );
 
     }
@@ -149,18 +178,15 @@ export default class AlphaStrikeRosterInPlay extends React.Component<IInPlayProp
           <ul className="main-menu">
                 <li><Link title="Click here to leave Play Mode (don't worry, you won't lose your current mech statuses)" className="current" to={`${process.env.PUBLIC_URL}/alpha-strike-roster`}><FaArrowCircleLeft /></Link></li>
 
-                {this.props.appGlobals.appSettings.alphaStrikeInPlayCardMode ? (
-                  <li title="Switch a large list mode"><span className="current" onClick={this.toggleCardMode}><FaList /></span></li>
-                ) : (
-                  <li title="Switch to showing 2+ cards per row"><span className="current" onClick={this.toggleCardMode}><FaTh /></span></li>
-
-                )}
+                <li title="Switch to showing 2+ cards per row"><span className="current" onClick={this.toggleCardMode}><FaColumns /> {this.props.appGlobals.appSettings.alphaStrikeInPlayColumns}</span></li>
 
                 <li>
                   <AlphaStrikeToggleRulerHexes
                     appGlobals={this.props.appGlobals}
                   />
                 </li>
+
+                <li title="Apply damage and heat changes to end the round"><span className="" onClick={this.nextRound}>End Round</span></li>
 
                 <li className="logo">
                     <a
@@ -197,10 +223,10 @@ export default class AlphaStrikeRosterInPlay extends React.Component<IInPlayProp
                   {group.getName(groupIndex + 1)}
                 </h2>
                 <div className="section-content">
-                  <div className="row">
+                  <div className={"flex-grid flex-" + this.props.appGlobals.appSettings.alphaStrikeInPlayColumns}>
                   {group.formationBonus!.Name!=="None"?(
                     <>
-                    <div className={this.props.appGlobals.appSettings.alphaStrikeInPlayCardMode ? "col-md-12" : "col-md-12"}>
+                    <div>
                       <p><strong>Bonus</strong>:&nbsp;
                       <em>{group.formationBonus!.Name}</em> - {group.formationBonus!.BonusDescription}</p>
                     </div>
@@ -213,7 +239,7 @@ export default class AlphaStrikeRosterInPlay extends React.Component<IInPlayProp
                     // let newInstance = new AlphaStrikeUnit( unit.export() );
                     return (
                     <React.Fragment key={unitIndex}>
-                      <div className={this.props.appGlobals.appSettings.alphaStrikeInPlayCardMode ? "col-md-6 col-lg-6 col-xl-3 col-xxl-2" : "col-md-12"}>
+                      <div className="unit-card">
                         <AlphaStrikeUnitSVG
                           asUnit={unit}
                           inPlay={true}

@@ -105,9 +105,21 @@ export interface IAlphaStrikeUnitExport {
     vehicleMotive11?: boolean[];
     vehicleMotive12?: boolean;
 
+    roundArmor?: boolean[];
+    roundStructure?: boolean[];
+    roundEngineHits?: boolean[];
+    roundFireControlHits?: boolean[];
+    roundMpControlHits?: boolean[];
+    roundWeaponHits?: boolean[];
+    roundVehicleMotive910?: boolean[];
+    roundVehicleMotive11?: boolean[];
+    roundVehicleMotive12?: boolean;
+    roundHeat?: number;
+
     tmm: number;
     // Additional Fields we use internally
     classification: string;
+    class: string;
     costCR: number;
     mulID: number;
     currentHeat: number;
@@ -210,7 +222,6 @@ export class AlphaStrikeUnit {
 
     public basePoints: number = 0;
     public currentPoints: number = 0;
-    public currentHeat: number = 0;
 
     public currentDamage: IAlphaStrikeDamage = {
         short: 0,
@@ -223,6 +234,9 @@ export class AlphaStrikeUnit {
         extremeMinimal: false,
     };
 
+    public currentAbilities: string[] = [];
+
+    public currentHeat: number = 0;
     public currentArmor: boolean[] = [];
     public currentStructure: boolean[] = [];
     public engineHits: boolean[] = [];
@@ -233,6 +247,17 @@ export class AlphaStrikeUnit {
     public vehicleMotive910: boolean[] = [];
     public vehicleMotive11: boolean[] = [];
     public vehicleMotive12: boolean = false;
+
+    public roundHeat: number = 0;
+    public roundArmor: boolean[] = [];
+    public roundStructure: boolean[] = [];
+    public roundEngineHits: boolean[] = [];
+    public roundFireControlHits: boolean[] = [];
+    public roundMpControlHits: boolean[] = [];
+    public roundWeaponHits: boolean[] = [];
+    public roundVehicleMotive910: boolean[] = [];
+    public roundVehicleMotive11: boolean[] = [];
+    public roundVehicleMotive12: boolean = false;
 
     private _pilot: Pilot = new Pilot( {
         name: "",
@@ -315,6 +340,7 @@ export class AlphaStrikeUnit {
             if( incomingMechData.BFDamageExtremeMin ) {
                 this.damage.extremeMinimal = true;
             }
+        
 
             if( incomingMechData.BFAbilities && incomingMechData.BFAbilities.trim() ) {
                 this.abilities = incomingMechData.BFAbilities.split(",");
@@ -375,7 +401,9 @@ export class AlphaStrikeUnit {
                 this.move.push( tmpMoveObj );
 
             }
+            
             this.calcCurrentValues();
+
         }
 
     }
@@ -389,6 +417,8 @@ export class AlphaStrikeUnit {
 
             if( incomingMechData.classification )
                 this.classification = incomingMechData.classification;
+            if( incomingMechData.class)
+                this.class = incomingMechData.class;
             this.costCR = incomingMechData.costCR / 1;
 
             this.mulID = incomingMechData.mulID / 1;
@@ -491,6 +521,46 @@ export class AlphaStrikeUnit {
 
         if( incomingMechData.weaponHits )
             this.weaponHits = incomingMechData.weaponHits;
+
+        if( incomingMechData.roundArmor ) {
+            this.roundArmor = incomingMechData.roundArmor;
+        }
+
+        if( incomingMechData.roundStructure ) {
+            this.roundStructure = incomingMechData.roundStructure;
+        }
+
+        if( incomingMechData.roundEngineHits ) {
+            this.roundEngineHits = incomingMechData.roundEngineHits;
+        }
+
+        if( incomingMechData.roundFireControlHits ) {
+            this.roundFireControlHits = incomingMechData.roundFireControlHits;
+        }
+
+        if( incomingMechData.roundMpControlHits ) {
+            this.roundMpControlHits = incomingMechData.roundMpControlHits;
+        }
+
+        if( incomingMechData.roundWeaponHits ) {
+            this.roundWeaponHits = incomingMechData.roundWeaponHits;
+        }
+
+        if( incomingMechData.roundVehicleMotive910 ) {
+            this.roundVehicleMotive910 = incomingMechData.roundVehicleMotive910;
+        }
+
+        if( incomingMechData.roundVehicleMotive11 ) {
+            this.roundVehicleMotive11 = incomingMechData.roundVehicleMotive11;
+        }
+
+        if( incomingMechData.roundVehicleMotive12 ) {
+            this.roundVehicleMotive12 = incomingMechData.roundVehicleMotive12;
+        }
+
+        if( incomingMechData.roundHeat ) {
+            this.roundHeat = incomingMechData.roundHeat;
+        }
 
             if( incomingMechData.customName )
             this.customName = incomingMechData.customName;
@@ -711,6 +781,67 @@ export class AlphaStrikeUnit {
         return false;
     }
 
+    public hasRoundStaged(): boolean {
+
+        if (this.roundHeat !== this.currentHeat) {
+            return true;
+        }
+
+        for( let point of this.roundArmor ) {
+            if (point) {
+                return true;
+            }
+        }
+        for( let point of this.roundStructure ) {
+            if (point) {
+                return true;
+            }
+        }
+        for( let point of this.roundEngineHits ) {
+            if (point) {
+                return true;
+            }
+        }
+        for( let point of this.roundFireControlHits ) {
+            if (point) {
+                return true;
+            }
+        }
+        for( let point of this.roundMpControlHits ) {
+            if (point) {
+                return true;
+            }
+        }
+        for( let point of this.roundWeaponHits ) {
+            if (point) {
+                return true;
+            }
+        }
+
+        if(
+            ( this.type && this.type.trim().toLowerCase() === "sv" )
+                ||
+            ( this.type && this.type.trim().toLowerCase() === "cv" )
+        ) {
+
+            for( let mpHitsCount = 0; mpHitsCount < this.roundVehicleMotive910.length; mpHitsCount++) {
+                if( this.roundVehicleMotive910[ mpHitsCount ] ) {
+                    return true;
+                }
+            }
+            for( let mpHitsCount = 0; mpHitsCount < this.vehicleMotive11.length; mpHitsCount++) {
+                if( this.roundVehicleMotive11[ mpHitsCount ] ) {
+                    return true;
+                }
+            }
+
+            if( this.roundVehicleMotive12 ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public getEngineHits(): number {
         let rv = 0;
@@ -792,10 +923,19 @@ export class AlphaStrikeUnit {
         this.fireControlHits = [];
         this.weaponHits = [];
         this.mpControlHits = [];
-        this.engineHits = [];
         this.vehicleMotive910 = [];
         this.vehicleMotive11 = [];
         this.vehicleMotive12 = false;
+        this.roundArmor = [];
+        this.roundStructure = [];
+        this.roundHeat = 0;
+        this.roundEngineHits = [];
+        this.roundFireControlHits = [];
+        this.roundWeaponHits = [];
+        this.roundMpControlHits = [];
+        this.roundVehicleMotive910 = [];
+        this.roundVehicleMotive11 = [];
+        this.roundVehicleMotive12 = false;
         this.calcCurrentValues();
     }
 
@@ -904,41 +1044,92 @@ export class AlphaStrikeUnit {
 
         if( typeof( this.currentArmor ) === "undefined" || this.currentArmor.length === 0 ) {
             this.currentArmor = [];
-            for( let armorCount = 0; armorCount < this.armor; armorCount++)
+            for( let armorCount = 0; armorCount < this.armor; armorCount++) {
                 this.currentArmor.push( false );
+            }
+        }
+
+        if( typeof( this.roundArmor ) === "undefined" || this.roundArmor.length !== this.currentArmor.length ) {
+            this.roundArmor = [];
+            for( let armorCount = 0; armorCount < this.armor; armorCount++) {
+                this.roundArmor.push( false );
+            }
         }
 
         if( typeof( this.currentStructure ) === "undefined" || this.currentStructure.length === 0 ) {
             this.currentStructure = [];
-            for( let structureCount = 0; structureCount < this.structure; structureCount++)
+            for( let structureCount = 0; structureCount < this.structure; structureCount++) {
                 this.currentStructure.push( false );
+            }
+        }
+
+        if( typeof( this.roundStructure ) === "undefined" || this.roundStructure.length !== this.currentStructure.length ) {
+            this.roundStructure = [];
+            for( let structureCount = 0; structureCount < this.structure; structureCount++) {
+                this.roundStructure.push( false );
+            }
         }
 
         if( typeof( this.engineHits ) === "undefined"  || this.engineHits.length === 0  ) {
             this.engineHits = [];
-            for( let engineHitsCount = 0; engineHitsCount < 2; engineHitsCount++)
+            for( let engineHitsCount = 0; engineHitsCount < 2; engineHitsCount++) {
                 this.engineHits.push( false );
+                this.roundEngineHits.push( false );
+            }
+        }
+
+        if( typeof( this.roundEngineHits ) === "undefined"  || this.roundEngineHits. length !== this.engineHits.length ) {
+            this.roundEngineHits = [];
+            for( let engineHitsCount = 0; engineHitsCount < 2; engineHitsCount++) {
+                this.roundEngineHits.push( false );
+            }
         }
 
         if( typeof( this.fireControlHits ) === "undefined"  || this.fireControlHits.length === 0  ) {
             this.fireControlHits = [];
-            for( let fcHitsCount = 0; fcHitsCount < 4; fcHitsCount++)
+            for( let fcHitsCount = 0; fcHitsCount < 4; fcHitsCount++) {
                 this.fireControlHits.push( false );
+            }
+        }
+
+        if( typeof( this.roundFireControlHits ) === "undefined"  || this.roundFireControlHits.length !== this.fireControlHits.length  ) {
+            this.roundFireControlHits = [];
+            for( let fcHitsCount = 0; fcHitsCount < 4; fcHitsCount++) {
+                this.roundFireControlHits.push( false );
+            }
         }
 
         if( typeof(this.vehicleMotive910) === "undefined" || this.vehicleMotive910.length === 0 ) {
-            this.vehicleMotive11 = [];
+            this.vehicleMotive910 = [];
+            this.roundVehicleMotive910 = [];
             for(let hitCount = 0; hitCount < 2; hitCount++) {
                 this.vehicleMotive910.push( false );
-            }
-        }
-        if( typeof(this.vehicleMotive11) === "undefined" || this.vehicleMotive11.length === 0 ) {
-            this.vehicleMotive11 = [];
-            for(let hitCount = 0; hitCount < 2; hitCount++) {
-                this.vehicleMotive11.push( false );
+                this.roundVehicleMotive910.push( false );
             }
         }
 
+        if( typeof(this.roundVehicleMotive910) === "undefined" || this.roundVehicleMotive910.length !== this.vehicleMotive910.length ) {
+            this.roundVehicleMotive910 = [];
+            for(let hitCount = 0; hitCount < 2; hitCount++) {
+                this.roundVehicleMotive910.push( false );
+            }
+        }
+
+        if( typeof(this.vehicleMotive11) === "undefined" || this.vehicleMotive11.length === 0 ) {
+            this.vehicleMotive11 = [];
+            this.roundVehicleMotive11 = [];
+            for(let hitCount = 0; hitCount < 2; hitCount++) {
+                this.vehicleMotive11.push( false );
+                this.roundVehicleMotive11.push( false );
+            }
+        }
+
+        if( typeof(this.roundVehicleMotive11) === "undefined" || this.roundVehicleMotive11.length !== this.vehicleMotive11.length ) {
+            this.roundVehicleMotive11 = [];
+            for(let hitCount = 0; hitCount < 2; hitCount++) {
+                this.roundVehicleMotive11.push( false );
+            }
+        }
 
         if( typeof( this.mpControlHits ) === "undefined"  || this.mpControlHits.length === 0  ) {
             this.mpControlHits = [];
@@ -961,17 +1152,32 @@ export class AlphaStrikeUnit {
                 numberOfHits = 5;
             }
 
-            for( let mpHitsCount = 0; mpHitsCount < numberOfHits; mpHitsCount++)
+            for( let mpHitsCount = 0; mpHitsCount < numberOfHits; mpHitsCount++) {
                 this.mpControlHits.push( false );
+            }
+        }
+
+        if( typeof( this.roundMpControlHits ) === "undefined"  || this.roundMpControlHits.length !== this.mpControlHits.length  ) {
+            for ( let mpHitsCount = 0; mpHitsCount < this.mpControlHits.length; mpHitsCount++) {
+                this.roundMpControlHits.push( false );
+            }
         }
 
         if( typeof( this.weaponHits ) === "undefined"  || this.weaponHits.length === 0  ) {
             this.weaponHits = [];
-            for( let weaponHitsCount = 0; weaponHitsCount < 4; weaponHitsCount++)
+            this.roundWeaponHits = [];
+            for( let weaponHitsCount = 0; weaponHitsCount < 4; weaponHitsCount++) {
                 this.weaponHits.push( false );
+                this.roundWeaponHits.push( false );
+            }
         }
 
-
+        if( typeof( this.roundWeaponHits ) === "undefined"  || this.roundWeaponHits.length !== this.weaponHits.length ) {
+            this.roundWeaponHits = [];
+            for( let weaponHitsCount = 0; weaponHitsCount < 4; weaponHitsCount++) {
+                this.roundWeaponHits.push( false );
+            }
+        }
 
 
 
@@ -998,63 +1204,57 @@ export class AlphaStrikeUnit {
             if( this.engineHits[ engineHitsCount ] )
                 currentEngineHits++;
         }
-
         // Calculate Current Damage Values from Crits...
-        let shortDamage = this.damage.short;
-        let mediumDamage = this.damage.medium;
-        let longDamage = this.damage.long;
-        let extremeDamage = this.damage.extreme;
-
-        if( shortDamage.toString().toString() !== "0*") {
-            shortDamage = (+shortDamage - currentWeaponHits);
-        } else {
-            if( currentWeaponHits )
-                shortDamage = 0;
-        }
-
-        if( mediumDamage.toString() !== "0*") {
-            mediumDamage = (+mediumDamage - currentWeaponHits)
-        } else {
-            if( currentWeaponHits )
-                mediumDamage =0;
-        }
-
-        if( longDamage.toString() !== "0*") {
-            longDamage = (+longDamage - currentWeaponHits)
-        } else {
-            if( currentWeaponHits )
-                longDamage = 0;
-        }
-
-        if( extremeDamage.toString() !== "0*") {
-            extremeDamage = (+extremeDamage - currentWeaponHits)
-        } else {
-            if( currentWeaponHits )
-                extremeDamage = 0;
-        }
-
-        if( +shortDamage < 0 )
-            shortDamage = 0;
-
-        if( +mediumDamage < 0 )
-            mediumDamage = 0;
-
-        if( +longDamage < 0 )
-            longDamage = 0;
-
-        if( +extremeDamage < 0 )
-            extremeDamage = 0;
+        
+        let [shortDamage, shortMinimal] = this.calculateDamage(this.damage.short, currentWeaponHits, this.damage.shortMinimal || false);
+        let [mediumDamage, mediumMinimal] = this.calculateDamage(this.damage.medium, currentWeaponHits, this.damage.mediumMinimal || false);
+        let [longDamage, longMinimal] = this.calculateDamage(this.damage.long, currentWeaponHits, this.damage.longMinimal || false);
+        let [extremeDamage, extremeMinimal] = this.calculateDamage(this.damage.extreme, currentWeaponHits, this.damage.extremeMinimal || false);
 
         this.currentDamage = {
             short: shortDamage,
             medium: mediumDamage,
             long: longDamage,
             extreme: extremeDamage,
-            shortMinimal: this.damage.shortMinimal ? true : false,
-            mediumMinimal: this.damage.mediumMinimal ? true : false,
-            longMinimal: this.damage.longMinimal ? true : false,
-            extremeMinimal: this.damage.extremeMinimal ? true : false,
+            shortMinimal: shortMinimal,
+            mediumMinimal: mediumMinimal,
+            longMinimal: longMinimal,
+            extremeMinimal: extremeMinimal,
         };
+
+        this.currentAbilities = this.abilities.map((abi) => {
+                let split = abi.split(/\d/);
+
+                // If there are no numbers, it's not got damage values
+                if (split.length === 1) {
+                    return abi;
+                }
+                let type = split[0].trim();
+
+                let values = abi.slice(type.length);
+                let turret = false;
+
+                // If the last character is a parenthesis, remove it and set turret to true
+                // This is a bit of a hack, but it works for now
+                if (values.endsWith(")")) {
+                    turret = true;
+                    values = values.slice(0, values.length - 1);
+                }
+                let damageValues = values.split("/");
+                let abiString = type + damageValues.map((damageValue) => {
+                    let damage = 0;
+                    let minimal = false;
+                    let dash = false;
+                    if (damageValue == "-") {
+                        dash = true;
+                    } else {
+                        [damage, minimal] = this.calculateDamage(+damageValue, currentWeaponHits, damageValue === "0*");
+                    }
+                    return dash ? "-" : minimal ? "0*" : damage.toString();
+                }).join("/");
+
+                return turret? abiString + ")" : abiString;
+        });
 
 
         for( let moveC = 0; moveC < this.move.length; moveC++ ) {
@@ -1358,6 +1558,29 @@ export class AlphaStrikeUnit {
 
 
     }
+
+    private calculateDamage(damage: number, weaponHits: number, minimal: boolean | undefined): [number, boolean] {
+        if (minimal === false) {
+            damage = (+damage - weaponHits);
+            // If weapon damage is now 0, and there are still hits, we have hit the minimal damage threshold
+            if (damage == 0 && weaponHits > 0) {
+                minimal = true;
+            } else if (damage < 0) {
+                damage = 0;
+            }
+            // If we are already at minimal damage and have weapon hits, we go to 0 damage
+        } else if (minimal === true) {
+            if (weaponHits) {
+                damage = 0;
+                minimal = false;
+            }
+        }
+        // Catch the rest
+        else {
+            damage = 0;
+        }
+        return [damage, minimal ? true : false];
+    }
     /**
     * Returns a boolean if the unit is a ground unit. This is used for
     * calculating whether or not the unit can sprint
@@ -1421,37 +1644,90 @@ export class AlphaStrikeUnit {
     }
 
     public setHeat( newHeatValue: number ) {
-        this.currentHeat = newHeatValue;
-        this.calcCurrentValues();
+        this.roundHeat = newHeatValue;
+    }
+
+    public applyRound() {
+        this.currentHeat = this.roundHeat;
+        this.roundArmor.map( (point, pointIndex) => {
+            if (point) {
+                this.currentArmor[pointIndex] = !this.currentArmor[pointIndex];
+                this.roundArmor[pointIndex] = false;
+            }
+        })
+        this.roundStructure.map( (point, pointIndex) => {
+            if (point) {
+                this.currentStructure[pointIndex] = !this.currentStructure[pointIndex];
+                this.roundStructure[pointIndex] = false;
+            }
+        })
+        this.roundEngineHits.map( (point, pointIndex) => {
+            if (point) {
+                this.engineHits[pointIndex] = !this.engineHits[pointIndex];
+                this.roundEngineHits[pointIndex] = false;
+            }
+        })
+        this.roundFireControlHits.map( (point, pointIndex) => {
+            if (point) {
+                this.fireControlHits[pointIndex] = !this.fireControlHits[pointIndex];
+                this.roundFireControlHits[pointIndex] = false;
+            }
+        })
+        this.roundMpControlHits.map( (point, pointIndex) => {
+            if (point) {
+                this.mpControlHits[pointIndex] = !this.mpControlHits[pointIndex];
+                this.roundMpControlHits[pointIndex] = false;
+            }
+        })
+        this.roundWeaponHits.map( (point, pointIndex) => {
+            if (point) {
+                this.weaponHits[pointIndex] = !this.weaponHits[pointIndex];
+                this.roundWeaponHits[pointIndex] = false;
+            }
+        })
+        this.roundVehicleMotive910.map( (point, pointIndex) => {
+            if (point) {
+                this.vehicleMotive910[pointIndex] = !this.vehicleMotive910[pointIndex];
+                this.roundVehicleMotive910[pointIndex] = false;
+            }
+        })
+        this.roundVehicleMotive11.map( (point, pointIndex) => {
+            if (point) {
+                this.vehicleMotive11[pointIndex] = !this.vehicleMotive11[pointIndex];
+                this.roundVehicleMotive11[pointIndex] = false;
+            }
+        })
+        if (this.roundVehicleMotive12) {
+            this.vehicleMotive12 = !this.vehicleMotive12;
+        }
+        this.roundVehicleMotive12 = false;
     }
 
     public takeDamage( numberOfPoints: number ) {
         let leftOverPoints = numberOfPoints;
-
+        
         for( let pointCounter = 0; pointCounter < numberOfPoints; pointCounter++ ) {
-            for( let armorCounter = 0; armorCounter < this.currentArmor.length; armorCounter++ ) {
-                if( this.currentArmor[armorCounter] === false ) {
+            for( let armorCounter = 0; armorCounter < this.roundArmor.length; armorCounter++ ) {
+                if( this.roundArmor[armorCounter] === false && this.currentArmor[armorCounter] === false ) {
                     if( leftOverPoints > 0 ) {
-                        this.currentArmor[armorCounter] = true;
+                        this.roundArmor[armorCounter] = true;
                         leftOverPoints--;
                     }
-
+                } else if ( this.roundArmor[armorCounter] === true && this.currentArmor[armorCounter] === true ) {
+                    this.roundArmor[armorCounter] = false;
                 }
             }
-
-            for( let structureCounter = 0; structureCounter < this.currentStructure.length; structureCounter++ ) {
-                if( this.currentStructure[structureCounter] === false ) {
+            for( let structureCounter = 0; structureCounter < this.roundStructure.length; structureCounter++ ) {
+                if( this.roundStructure[structureCounter] === false && this.currentStructure[structureCounter] === false ) {
                     if( leftOverPoints > 0 ) {
-                        this.currentStructure[structureCounter] = true;
+                        this.roundStructure[structureCounter] = true;
                         leftOverPoints--;
-
-                        if( this.getCurrentStructure() === 0 )
-                            this.active = false;
-                        else
-                            this.active = true;
-                    }
+                    } 
+                } else if ( this.roundStructure[structureCounter] === true && this.currentStructure[structureCounter] === true ) {
+                    this.roundStructure[structureCounter] = false;
                 }
             }
+            
         }
 
         this.calcCurrentValues();
@@ -1485,12 +1761,9 @@ export class AlphaStrikeUnit {
 
     public setArmor( nv: number ) {
         this.armor = nv;
-
     }
     public setStructure( nv: number ) {
         this.armor = nv;
-
-
     }
 
     public export(
@@ -1511,6 +1784,16 @@ export class AlphaStrikeUnit {
 
         let _currentHeat = 0;
 
+        let _roundArmor: boolean[] = [];
+        let _roundStructure: boolean[] = [];
+        let _roundEngineHits: boolean[] = [];
+        let _roundFireControlHits: boolean[] = [];
+        let _roundMpControlHits: boolean[] = [];
+        let _roundWeaponHits: boolean[] = [];
+        let _roundVehicleMotive910: boolean[] = [];
+        let _roundVehicleMotive11: boolean[] = [];
+        let _roundVehicleMotive12: boolean = false;
+        let _roundHeat = 0;
 
         if( !noInPlayVariables ) {
             _currentArmor = this.currentArmor;
@@ -1524,6 +1807,16 @@ export class AlphaStrikeUnit {
             _vehicleMotive910 = this.vehicleMotive910;
             _vehicleMotive11 = this.vehicleMotive11;
             _vehicleMotive12 = this.vehicleMotive12;
+            _roundArmor = this.roundArmor;
+            _roundStructure = this.roundStructure;
+            _roundEngineHits = this.roundEngineHits;
+            _roundFireControlHits = this.roundFireControlHits;
+            _roundMpControlHits = this.roundMpControlHits;
+            _roundWeaponHits = this.roundWeaponHits;
+            _roundVehicleMotive910 = this.roundVehicleMotive910;
+            _roundVehicleMotive11 = this.roundVehicleMotive11;
+            _roundVehicleMotive12 = this.roundVehicleMotive12;
+            _roundHeat = this.roundHeat;
         }
 
         let rv:  IAlphaStrikeUnitExport = {
@@ -1538,7 +1831,18 @@ export class AlphaStrikeUnit {
             vehicleMotive910:  _vehicleMotive910,
             vehicleMotive11:  _vehicleMotive11,
             vehicleMotive12:  _vehicleMotive12,
+            roundArmor: _roundArmor,
+            roundStructure: _roundStructure,
+            roundEngineHits: _roundEngineHits,
+            roundFireControlHits: _roundFireControlHits,
+            roundMpControlHits: _roundMpControlHits,
+            roundWeaponHits: _roundWeaponHits,
+            roundVehicleMotive910: _roundVehicleMotive910,
+            roundVehicleMotive11: _roundVehicleMotive11,
+            roundVehicleMotive12: _roundVehicleMotive12,
+            roundHeat: _roundHeat,
             classification:  this.classification,
+            class:  this.class?? "",
             costCR:  this.costCR,
             mulID:  this.mulID,
             currentHeat:  _currentHeat,
