@@ -5,19 +5,11 @@ import AppRouter from "./ui/app-router";
 
 // ReactDOM.render(<AppRouter />, document.getElementById('root'));
 import { createRoot } from "react-dom/client";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 const container = document.getElementById("root");
 const root = createRoot(container!); // createRoot(container!) if you use TypeScript
 root.render(
   <GoogleOAuthProvider clientId="902689505243-vk0f8croj87arptpaflnt4mri8kpvjs3.apps.googleusercontent.com">
-    <GoogleLogin
-      onSuccess={(response) => {
-        console.log("response", response);
-      }}
-      onError={() => {
-        console.log("Login failed");
-      }}
-    />
     <AppRouter />
   </GoogleOAuthProvider>
 );
