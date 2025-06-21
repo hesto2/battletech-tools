@@ -7,7 +7,10 @@ import BattleTechLogo from "./battletech-logo";
 import "./top-menu.scss";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../auth/AuthProvider";
-import { Button } from "react-bootstrap";
+import { Button, Modal, Form } from "react-bootstrap";
+import { useRemoteData } from "../../auth/RemoteDataProvider";
+import { getActiveConfigName, StoredConfig } from "../../auth/ConfigManager";
+import { getConfig, setConfig } from "../../auth/ApiClient";
 
 export default function TopMenu(props: ITopMenuProps) {
   const toggleMobile = (): void => {
@@ -16,7 +19,106 @@ export default function TopMenu(props: ITopMenuProps) {
   const closeMobile = (): void => {
     props.appGlobals.closeMobile();
   };
-  const { isLoggedIn, logout, email, login } = useAuth();
+  const { isLoggedIn, logout, email, login, tokens } = useAuth();
+
+  // Remote data (last saved time)
+  const { lastUpdated } = useRemoteData();
+
+  // Local configuration management
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [configName, setConfigName] = useState<string>(getActiveConfigName() || "");
+
+  // List of configs fetched from server
+  const [remoteConfigs, setRemoteConfigs] = useState<StoredConfig[]>([]);
+
+  // Temp states for modal inputs
+  const [tempSaveName, setTempSaveName] = useState<string>(configName);
+  const [tempLoadName, setTempLoadName] = useState<string>(configName);
+
+  const lastSavedDisplay = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString()
+    : "Never";
+
+  const fetchRemoteConfigs = async (): Promise<StoredConfig[]> => {
+    if (!tokens?.access_token) return [];
+    try {
+      const remote = await getConfig(tokens.access_token);
+      if (remote.savedConfigs) {
+        return JSON.parse(remote.savedConfigs);
+      }
+    } catch (e) {
+      console.error("Failed to fetch remote configs", e);
+    }
+    return [];
+  };
+
+  const openLoadModal = async () => {
+    const list = await fetchRemoteConfigs();
+    setRemoteConfigs(list);
+    if (list.length > 0) {
+      setTempLoadName(list[0].name);
+    }
+    setShowLoadModal(true);
+  };
+
+  const openSaveModal = async () => {
+    const list = await fetchRemoteConfigs();
+    setRemoteConfigs(list);
+    setTempSaveName(configName);
+    setShowSaveModal(true);
+  };
+
+  const handleSaveConfirm = async () => {
+    if (!tokens?.access_token) return;
+
+    const data: any = {};
+    ["currentASForce", "favoriteASGroups"].forEach((key) => {
+      data[key] = localStorage.getItem(key);
+    });
+
+    // Fetch current saved list
+    let savedList: StoredConfig[] = await fetchRemoteConfigs();
+    // Remove existing by same name
+    savedList = savedList.filter((c) => c.name !== tempSaveName);
+
+    const newConfig: StoredConfig = {
+      name: tempSaveName || "Unnamed Config",
+      savedAt: Date.now(),
+      device: navigator.userAgent,
+      data,
+    };
+    savedList.push(newConfig);
+
+    await setConfig(
+      { savedConfigs: JSON.stringify(savedList) },
+      tokens.access_token
+    );
+
+    setRemoteConfigs(savedList);
+    setConfigName(newConfig.name);
+    setShowSaveModal(false);
+  };
+
+  const handleLoadConfirm = async () => {
+    if (!tempLoadName) return;
+    const cfg = remoteConfigs.find((c) => c.name === tempLoadName);
+    if (cfg) {
+      Object.keys(cfg.data).forEach((key) => {
+        const value = (cfg.data as any)[key];
+        if (value !== undefined && value !== null) {
+          localStorage.setItem(key, value as string);
+        } else {
+          localStorage.removeItem(key);
+        }
+      });
+      setConfigName(cfg.name);
+
+      // Reload to apply config; no automatic save
+      window.location.reload();
+    }
+    setShowLoadModal(false);
+  };
 
   let menuStructure: IMenuDef[] = [
     {
@@ -238,6 +340,27 @@ export default function TopMenu(props: ITopMenuProps) {
               </React.Fragment>
             );
           })}
+          {isLoggedIn && (
+            <li className="config-actions d-none d-md-inline">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={openLoadModal}
+              >
+                Load
+              </Button>{" "}
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={openSaveModal}
+              >
+                Save
+              </Button>
+              <div className="ms-2 d-inline-block">
+                {configName || "No Config"} | Last: {lastSavedDisplay}
+              </div>
+            </li>
+          )}
           {isLoggedIn ? (
             <li className="login">
               <a href="#" onClick={logout}>
@@ -335,6 +458,89 @@ export default function TopMenu(props: ITopMenuProps) {
           })}
         </ul>
       </div>
+      {/* Save Configuration Modal */}
+      <Modal show={showSaveModal} onHide={() => setShowSaveModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Save Configuration</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3" controlId="configNameInput">
+            <Form.Label>Configuration Name</Form.Label>
+            <Form.Control
+              type="text"
+              value={tempSaveName}
+              placeholder="Enter configuration name"
+              onChange={(e) => setTempSaveName(e.target.value)}
+            />
+            <Form.Text className="text-muted">
+              Selecting an existing name will overwrite it.
+            </Form.Text>
+          </Form.Group>
+          {remoteConfigs.length > 0 && (
+            <Form.Group className="mb-3" controlId="existingConfigsSelect">
+              <Form.Label>Or select existing</Form.Label>
+              <Form.Select
+                value={tempSaveName}
+                onChange={(e) => setTempSaveName(e.target.value)}
+              >
+                <option value="">-- New Configuration --</option>
+                {remoteConfigs.map((cfg) => (
+                  <option key={cfg.name} value={cfg.name}>
+                    {cfg.name}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSaveModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSaveConfirm}
+            disabled={!tempSaveName.trim()}
+          >
+            Save
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Load Configuration Modal */}
+      <Modal show={showLoadModal} onHide={() => setShowLoadModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Load Configuration</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {remoteConfigs.length === 0 ? (
+            <p>No configurations saved.</p>
+          ) : (
+            <Form.Select
+              value={tempLoadName}
+              onChange={(e) => setTempLoadName(e.target.value)}
+            >
+              {remoteConfigs.map((cfg) => (
+                <option key={cfg.name} value={cfg.name}>
+                  {cfg.name}
+                </option>
+              ))}
+            </Form.Select>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowLoadModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleLoadConfirm}
+            disabled={!tempLoadName}
+          >
+            Load
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

@@ -43,22 +43,35 @@ export const RemoteDataProvider = ({
     }
     const config = await getConfig(tokens?.access_token);
 
-    // Save each config to local storage
+    // Merge remote config into localStorage WITHOUT overwriting existing local changes
     Object.keys(config).forEach((key) => {
-      if (config[key]) {
+      if (!config[key]) {
+        return;
+      }
+
+      const existing = localStorage.getItem(key);
+      if (existing === null) {
+        // Only set if there is nothing locally yet so that a locally-loaded configuration is preserved
         localStorage.setItem(key, config[key]);
       }
     });
 
-    // If we have a config, update the state of the app
-    if (config?.currentASForce || config?.favoriteASGroups) {
+    // Build an effectiveConfig object from what is currently in localStorage so state reflects local view
+    const effectiveConfig: any = {};
+    ["currentASForce", "favoriteASGroups"].forEach((k) => {
+      const val = localStorage.getItem(k);
+      if (val !== null) effectiveConfig[k] = val;
+    });
+
+    if (effectiveConfig.currentASForce || effectiveConfig.favoriteASGroups) {
       onUpdateConfig({
-        currentASForce: JSON.parse(config?.currentASForce || {}),
-        favoriteASGroups: JSON.parse(config?.favoriteASGroups || {}),
+        currentASForce: JSON.parse(effectiveConfig.currentASForce || "{}"),
+        favoriteASGroups: JSON.parse(effectiveConfig.favoriteASGroups || "[]"),
       });
     }
 
-    setLastConfig(config || {});
+    // Use the effective config (local) as lastConfig baseline to avoid false dirty detection
+    setLastConfig(effectiveConfig);
     setLastUpdated(Date.now());
   }, [tokens?.access_token]);
 
@@ -94,14 +107,7 @@ export const RemoteDataProvider = ({
     }
   }, [tokens?.access_token, fetchRemoteConfig]);
 
-  useEffect(() => {
-    if (tokens?.access_token && lastConfig) {
-      const intervalId = setInterval(() => {
-        updateRemoteConfigIfDirty();
-      }, 1000 * 5); // 15 seconds
-      return () => clearInterval(intervalId); // Cleanup interval on unmount or when tokens changes
-    }
-  }, [tokens?.access_token, lastConfig, updateRemoteConfigIfDirty]);
+  // Removed auto-save interval; saving is now triggered manually via UI
 
   useEffect(() => {
     if (tokens?.access_token && lastConfig) {
