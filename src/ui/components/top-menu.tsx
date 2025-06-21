@@ -96,6 +96,8 @@ export default function TopMenu(props: ITopMenuProps) {
     );
 
     setRemoteConfigs(savedList);
+    // Persist active configuration locally
+    localStorage.setItem("activeConfigName", newConfig.name);
     setConfigName(newConfig.name);
     setShowSaveModal(false);
   };
@@ -112,10 +114,11 @@ export default function TopMenu(props: ITopMenuProps) {
           localStorage.removeItem(key);
         }
       });
+      // Store active config name locally so it persists after reload
+      localStorage.setItem("activeConfigName", cfg.name);
       setConfigName(cfg.name);
 
-      // Reload to apply config; no automatic save
-      window.location.reload();
+      // Previously reloaded page to apply config globally; now we rely on components reading from localStorage as needed.
     }
     setShowLoadModal(false);
   };
