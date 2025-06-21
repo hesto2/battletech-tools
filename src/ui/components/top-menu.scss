@@ -395,3 +395,14 @@ body.retro {
     }
   }
 }
+
+// Add spacing for Load/Save buttons in the top menu so they are not flush against the top edge
+.topmenu {
+  ul.main-menu {
+    li.config-actions {
+      .btn {
+        margin-top: 0.25rem; // adjust as needed
+      }
+    }
+  }
+}

@@ -1,10 +1,13 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ESaveDataMode } from '../../../dataSaves';
 import { IAppGlobals } from '../../app-router';
 import InputCheckbox from '../../components/form_elements/input_checkbox';
 import UIPage from '../../components/ui-page';
+import { useAuth } from '../../../auth/AuthProvider';
+import { getConfig, setConfig } from '../../../auth/ApiClient';
+import { StoredConfig } from '../../../auth/ConfigManager';
+import { FaTrash } from 'react-icons/fa';
 
 export default class SettingsHome extends React.Component<ISettingsHomeProps, ISettingsHomeState> {
     // [openPicker, data, authResponse] = useDrivePicker();
@@ -83,34 +86,9 @@ export default class SettingsHome extends React.Component<ISettingsHomeProps, IS
                 <fieldset className="fieldset">
                   <legend>Data Management</legend>
                     <p>To Backup and Restore your data from another device, visit the <Link to={`${process.env.PUBLIC_URL}/settings/backup-and-restore`}>Backup and Restore</Link> page</p>
-{/*
-                    <label>
-                      Storage Target:<br />
-                      <select
-                        onChange={this.setStorageTarget}
-                        value={this.state.selectedStorageTarget}
-                      >
-                        <option value={ESaveDataMode.localStorage}>
-                          Local Storage {this.props.appGlobals.appSettings.storageLocation === ESaveDataMode.localStorage ? "(current)" : "" }
-                          </option>
-                        <option value={ESaveDataMode.firebase}>
-                          Firebase {this.props.appGlobals.appSettings.storageLocation === ESaveDataMode.firebase ? "(current)" : "" } </option>
-                      </select>
 
-                    </label>
-                    {this.state.selectedStorageTarget === ESaveDataMode.localStorage ? (
-                      <>
-                        <p>localStorage is an area of memory in every browser which a web page can store data. This is the default location for this app. If you clear your browser history, setting, and caches, it <strong>may</strong> clear our all your work. Be sure to back up often!</p>
-                      </>
-                    ) : null}
-
-                    {this.state.selectedStorageTarget === ESaveDataMode.firebase ? (
-                      <>
-                        <p><a href="https://firebase.google.com/" target="out">Google Firebase</a> is a free service which you can sign up for to store your personal data. I can't vouch for the privacy of the service, as I'm wary all things Google.</p>
-                        <p>The advantage of using Firebase is that once set up, all your data is synced across devices and stored on their servers.</p>
-                        <p>To Switch to FireBase, you'll need to sign up for an account, enter your Firebase Login info below, and then test the connection.</p>
-                      </>
-                    ) : null} */}
+                    <h5>Saved Configurations</h5>
+                    <ConfigManagement />
                   </fieldset>
               </div>
             </div>
@@ -128,3 +106,83 @@ interface ISettingsHomeState {
   updated: boolean;
   selectedStorageTarget: ESaveDataMode;
 }
+
+// Functional component to manage saved configurations list and deletion
+const ConfigManagement: React.FC = () => {
+  const { tokens, isLoggedIn } = useAuth();
+  const [configs, setConfigs] = useState<StoredConfig[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch configs from server when tokens change
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      if (!tokens?.access_token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const remote = await getConfig(tokens.access_token);
+        if (remote.savedConfigs) {
+          setConfigs(JSON.parse(remote.savedConfigs));
+        }
+      } catch (e) {
+        console.error('Failed to fetch remote configs', e);
+      }
+      setLoading(false);
+    };
+    fetchConfigs();
+  }, [tokens]);
+
+  const deleteConfigEntry = async (name: string) => {
+    if (!window.confirm(`Delete configuration "${name}"?`)) return;
+    const newList = configs.filter((c) => c.name !== name);
+    setConfigs(newList);
+    if (tokens?.access_token) {
+      try {
+        await setConfig({ savedConfigs: JSON.stringify(newList) }, tokens.access_token);
+      } catch (e) {
+        console.error('Failed to delete config', e);
+      }
+    }
+  };
+
+  if (!isLoggedIn) {
+    return <p>Please log in to manage configurations.</p>;
+  }
+
+  if (loading) {
+    return <p>Loading configurations...</p>;
+  }
+
+  if (configs.length === 0) {
+    return <p>No configurations found.</p>;
+  }
+
+  return (
+    <table className="table table-sm">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Last Saved</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {configs.map((cfg) => (
+          <tr key={cfg.name}>
+            <td>{cfg.name}</td>
+            <td>{new Date(cfg.savedAt).toLocaleString()}</td>
+            <td>
+              <FaTrash
+                role="button"
+                style={{ cursor: 'pointer' }}
+                title="Delete configuration"
+                onClick={() => deleteConfigEntry(cfg.name)}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};

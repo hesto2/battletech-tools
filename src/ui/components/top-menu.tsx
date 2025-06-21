@@ -344,7 +344,7 @@ export default function TopMenu(props: ITopMenuProps) {
             <li className="config-actions d-none d-md-inline">
               <Button
                 size="sm"
-                variant="secondary"
+                variant="primary"
                 onClick={openLoadModal}
               >
                 Load
@@ -353,12 +353,10 @@ export default function TopMenu(props: ITopMenuProps) {
                 size="sm"
                 variant="primary"
                 onClick={openSaveModal}
+                title={`Last saved: ${lastSavedDisplay}`}
               >
                 Save
               </Button>
-              <div className="ms-2 d-inline-block">
-                {configName || "No Config"} | Last: {lastSavedDisplay}
-              </div>
             </li>
           )}
           {isLoggedIn ? (
@@ -366,6 +364,9 @@ export default function TopMenu(props: ITopMenuProps) {
               <a href="#" onClick={logout}>
                 Log Out: {email}
               </a>
+              <small className="ms-2 d-inline-block">
+                Active Force: {configName || "None"}
+              </small>
             </li>
           ) : (
             <div className={"google-btn"}>
@@ -472,7 +473,7 @@ export default function TopMenu(props: ITopMenuProps) {
               placeholder="Enter configuration name"
               onChange={(e) => setTempSaveName(e.target.value)}
             />
-            <Form.Text className="text-muted">
+            <Form.Text className="text-light">
               Selecting an existing name will overwrite it.
             </Form.Text>
           </Form.Group>
